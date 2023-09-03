@@ -42,7 +42,21 @@ df_product = pd.read_csv(r'/content/Product.csv',delimiter = ';')
 df_store = pd.read_csv(r'/content/Store.csv',delimiter = ';')
 df_transaction = pd.read_csv(r'/content/Transaction.csv',delimiter = ';')
 
-"""# **Data Cleansing**"""
+"""# **Data Cleansing**
+  Fungsi utama dari data cleansing adalah untuk membersihkan, memperbaiki, dan mempersiapkan data agar dapat digunakan dalam analisis dan pemodelan.
+
+Berikut beberapa tujuan utama dari data cleansing
+1.   Menghilangkan Noise
+2.   Mengisi Data yang Hilang
+3.   Standarisasi Data
+4.   Validasi Data
+5.   Mengubah tipe data
+6.   Memeriksa konsistensi data
+7.   Mengatasi data duplikat
+
+
+
+"""
 
 df_customer.head()
 
@@ -73,7 +87,16 @@ df_merge = pd.merge(df_merge,df_product.drop(columns=['Price']),on=['ProductID']
 df_merge = pd.merge(df_merge,df_store,on=['StoreID'])
 df_merge.head()
 
-"""# **Membuat Model Mechine Learning (time series)**"""
+"""# **Membuat Model Mechine Learning (time series)**
+
+Model Machine learning Time Series yang akan digunakan yaitu ARIMA (AutoRegressive Integrated Moving Average) adalah salah satu metode analisis statistik yang digunakan untuk memodelkan dan meramalkan data deret waktu. model ARIMA ynag digunakan model ARIMA (p, d, q), di mana:
+
+1. p adalah orde autoregresif, yang mengindikasikan berapa banyak nilai sebelumnya yang akan digunakan dalam model AR.
+2. d adalah orde diferensiasi, yang mengindikasikan berapa kali diferensiasi yang diperlukan untuk menjadikan deret waktu stasioner.
+3. q adalah orde moving average, yang mengindikasikan berapa banyak nilai gangguan acak sebelumnya yang akan digunakan dalam model MA.
+
+Proses membangun model ARIMA melibatkan pemilihan nilai-nilai p, d, dan q yang paling sesuai untuk data deret waktu tertentu, pelatihan model dengan data historis, dan kemudian menggunakan model tersebut untuk meramalkan nilai-nilai masa depan.
+"""
 
 #model regresi time series arima
 df_regresi = df_merge.groupby('Date').agg({'Qty':'sum'}).reset_index()
@@ -104,7 +127,9 @@ ax4.set_ylabel('Residual')
 plt.tight_layout()
 plt.show()
 
-"""# **Mengecek stasioner data menggunakan (Augmented Dickey-Fuller test) **"""
+"""# *Mengecek stasioner data menggunakan (Augmented Dickey-Fuller test) *
+  Augmented Dickey-Fuller (ADF) test adalah sebuah tes statistik yang digunakan untuk menguji apakah suatu deret waktu stasioner atau tidak. Dalam konteks pengujian stasioneritas, konsep stasioneritas mengacu pada deret waktu yang statistikanya tetap atau tidak berubah sepanjang waktu. ADF test adalah salah satu alat penting dalam analisis deret waktu, terutama dalam pemodelan time series seperti ARIMA (AutoRegressive Integrated Moving Average).
+"""
 
 result = adfuller(df_regresi['Qty'])
 print('ADF Statistic: %f' % result[0])
@@ -131,7 +156,18 @@ ax2.plot(df_regresi.Qty.diff(periods = 7)); ax2.set_title('7st Order Differencin
 
 plt.show()
 
-"""# **Mencari nilai P menggunakan PCF dan Q menggunkan ACF**"""
+"""# **Mencari nilai P menggunakan PACF dan Q menggunkan ACF**
+ACF (Autocorrelation Function) dan PACF (Partial Autocorrelation Function)
+
+
+
+*   Plot ACF: ACF adalah grafik fungsi korelasi antara nilai-nilai dalam deret waktu dengan nilai-nilai sebelumnya dalam deret waktu. Plot ACF dapat membantu mengidentifikasi orde autoregresif yang potensial. Dalam plot ACF, puncak-puncak yang melampaui area bayangan adalah indikasi dari orde autoregresif yang mungkin. Orde autoregresif adalah jumlah lag (nilai-nilai sebelumnya) yang signifikan dalam plot ACF.
+*   Plot PACF: PACF adalah grafik fungsi korelasi parsial yang memeriksa hubungan antara dua titik dalam deret waktu dengan mengontrol semua lag yang berada di antara keduanya. Plot PACF membantu lebih mempersempit nilai p yang mungkin. Orde autoregresif yang signifikan dalam plot PACF adalah nilai p yang potensial.
+*   Setelah melakukan plot ACF dan PACF,dapat mulai eksplorasi berbagai nilai p untuk membangun beberapa model ARIMA dengan orde yang berbeda. menggunakan alat statistik atau perangkat lunak seperti Python dengan paket seperti Statsmodels atau R untuk menghitung model ARIMA dengan nilai p yang berbeda dan membandingkannya.
+
+
+
+"""
 
 # menggunakan Data Original
 plot_acf(df_regresi['Qty'].dropna(),lags=30)
@@ -161,7 +197,9 @@ plt.show()
 
 df_regresi.head
 
-#mencari nilai P,D,Q dengan menggunakna auto arima
+"""Menggunakn auto arima sebagai perbandingan untuk menentunkan nilai orde yang paling sesuai untuk digunakan dapat dilihat nilai orde yang digunakan yaitu (,0,0,0) (2,1,1,7) meruapakan nilai terbaik yang dapat digunakan."""
+
+#Mencari nilai P,D,Q dengan menggunakna auto arima
 model= auto_arima(df_regresi['Qty'],start_p=0, start_q=0,
                            max_p=0, max_q=0, m=7,
                            start_P=0, seasonal=True,
@@ -182,6 +220,7 @@ df_train
 
 df_test.head()
 
+#Plot data tarin dan data test
 plt.figure(figsize=(20,5))
 ans.lineplot(data=df_train, x=df_train['Date'],y=df_train['Qty'])
 ans.lineplot(data=df_test, x=df_test['Date'],y=df_train['Qty'])
@@ -207,9 +246,8 @@ mod = ARIMA(df_train['Qty'], order=order)
 res = mod.fit()
 jlung = acorr_ljungbox(res.resid)
 
-jlung
-
-# ARIMA (3,1,0) seasonal (2,1,0)[12]
+# Prediksi model arima yang digunakan
+# ARIMA (0,0,0) seasonal (2,1,1)[7]
 df_train = df_train.set_index('Date')
 df_test = df_test.set_index('Date')
 
@@ -230,6 +268,7 @@ plt.plot(y_pred_out, color = 'black', label = 'Arima Prediction')
 plt.legend()
 plt.tight_layout()
 
+# Melakukan Forecast dari data yang digunakan selama satu bulan
 forecast_length = 31
 forecast_result = fit_qty.get_forecast(forecast_length)
 forecast_result_arima = forecast_result.conf_int()
@@ -246,7 +285,10 @@ plt.plot(forecast_result_arima['forecasted Qty'], color = 'green', label = 'ARIM
 plt.legend()
 plt.tight_layout()
 
-"""## **Clustering**"""
+"""## **Clustering**
+
+ K-Means adalah salah satu metode yang paling umum digunakan dalam analisis klaster atau clustering dalam ilmu data dan statistik. Tujuannya adalah untuk mengelompokkan data menjadi klaster atau kelompok berdasarkan kesamaan atribut atau karakteristik tertentu. Kluster-kluster ini dibentuk dengan cara meminimalkan variasi (varians) dalam setiap kluster dan memaksimalkan variasi antar kluster.
+"""
 
 df_merge.head()
 
@@ -259,6 +301,10 @@ df_cluster = df_merge.groupby('CustomerID').agg({'TransactionID':
                                                  'TotalAmount':'sum'}).reset_index()
 df_cluster.tail()
 
+"""-> Normalisasi data dalam clustering K-Means adalah langkah penting dalam
+persiapan data sebelum menerapkan algoritma K-Means. Normalisasi bertujuan untuk mengubah rentang nilai atribut atau fitur dalam data agar memiliki skala yang seragam, sehingga semua atribut memiliki pengaruh yang seimbang dalam proses clustering. Tanpa normalisasi, atribut dengan skala yang besar atau varian yang tinggi akan mendominasi dalam pembentukan kluster, yang dapat menghasilkan hasil yang bias. DIsini saya menggunakna Min-Max Scaling: Ini adalah salah satu metode normalisasi yang paling umum. Min-Max scaling mengubah setiap atribut sehingga nilainya berada dalam rentang [0, 1],
+"""
+
 #Normalisasi Data
 df_normalis= df_cluster.drop('CustomerID',axis = 1)
 normalis = df_normalis.columns
@@ -268,7 +314,20 @@ df_normalisasi = pd.DataFrame(data = df_normalisasi, columns=normalis)
 
 df_normalisasi.head()
 
-#Implementasi menggunakn elnow method
+"""Elbow Method adalah salah satu teknik yang digunakan untuk memilih jumlah kluster yang optimal dalam algoritma clustering, seperti K-Means. Tujuannya adalah untuk menemukan jumlah kluster yang paling sesuai dengan struktur data yang ada.
+langkah langkah elbow method
+1. Pilih Rentang Jumlah Kluster: Langkah pertama adalah menentukan rentang jumlah kluster yang akan Anda coba. Anda biasanya memulai dengan jumlah kluster yang rendah, misalnya 2 kluster, dan meningkatkannya secara bertahap hingga jumlah kluster tertentu, yang mungkin mencakup sebagian besar data Anda.
+
+2. Hitung Inertia (Within-Cluster Sum of Squares): Untuk setiap jumlah kluster dalam rentang yang Anda tentukan, jalankan algoritma clustering (misalnya, K-Means) dan hitung nilai inertia atau dalam-cluster sum of squares. Inertia adalah jumlah kuadrat jarak antara setiap data dalam kluster dengan pusat klusternya. Ini mengukur seberapa kompak kluster-kelompoknya. Nilai inertia lebih rendah menunjukkan bahwa data dalam kluster lebih erat terkumpul.
+
+3. Plot Nilai Inertia: Buat grafik yang menunjukkan jumlah kluster pada sumbu X dan nilai inertia pada sumbu Y. Ini akan menghasilkan grafik yang menyerupai lengan manusia.
+
+4. Identifikasi "Elbow": Lihat grafik nilai inertia. Pada awalnya, nilai inertia akan menurun seiring dengan peningkatan jumlah kluster. Namun, pada suatu titik, penurunan akan melambat, dan grafik akan membentuk kurva seperti siku (elbow). Titik ini disebut "elbow point."
+
+5. Pilih Jumlah Kluster Optimal: Jumlah kluster optimal dipilih berdasarkan grafik elbow. Ini adalah jumlah kluster di mana penurunan nilai inertia tidak lagi signifikan atau lambat. Biasanya, jumlah kluster optimal adalah jumlah kluster yang terletak di sekitar siku grafik elbow. Ini adalah jumlah kluster yang mempertahankan keseimbangan antara kompaknya kluster (rendahnya inertia) dan jumlah kluster yang terlalu banyak.
+"""
+
+#Implementasi menggunakn elbow method
 inersia_value = []
 k_value = range(1, 11)
 
@@ -285,13 +344,22 @@ plt.xlabel("Number of Clusters")
 plt.ylabel("inersia value")
 plt.show()
 
-# Menemtukannilai K secara otomatis
+# Menentukan nilai K dengan elbow method secara otomatis
 kl = KneeLocator(range(1, 11), inersia_value, curve="convex", direction="decreasing" )
 kl.elbow
 
-"""# **Memilih nilai kluster 3 **"""
+"""Silhouette Coefficient adalah metrik evaluasi yang digunakan untuk mengukur seberapa baik objek-objek dalam kluster telah dikelompokkan dengan baik dalam analisis clustering. Metrik ini membantu dalam menilai kualitas klustering dengan memberikan skor untuk setiap data point berdasarkan seberapa baik data tersebut dikelompokkan dengan anggota kluster lainnya dibandingkan dengan kluster lainnya.
 
-df_normalisasi
+Skor Silhouette Coefficient berkisar antara -1 hingga +1, dan hasil interpretasinya adalah sebagai berikut:
+
+1. Nilai positif mendekati +1: Ini menunjukkan bahwa objek dalam kluster tersebut dikelompokkan dengan sangat baik, dengan sedikit atau tanpa tumpang tindih dengan kluster lainnya.
+
+2. Nilai nol: Ini menunjukkan bahwa objek tersebut berada tepat pada batas antara dua kluster yang berdekatan atau memiliki kesulitan dalam menentukan kluster yang sesuai.
+
+3. Nilai negatif mendekati -1: Ini menunjukkan bahwa objek tersebut mungkin ditempatkan dalam kluster yang salah dan lebih baik jika ditempatkan dalam kluster lain.
+
+Keuntungan penggunaan Silhouette Coefficient adalah kemampuannya untuk memberikan informasi tentang seberapa baik klustering telah dilakukan tanpa memerlukan pengetahuan sebelumnya tentang label kelas sebenarnya (dalam metode unsupervised learning).
+"""
 
 # mencari nilai Silhouette Coefficient
 silhouette_value = []
@@ -312,8 +380,9 @@ plt.xlabel("Number of Clusters")
 plt.ylabel("Silhouette Coefficient")
 plt.show()
 
-# Clustering dengan menggunkaan k=3 dan k=7
-#dengan K = 3
+"""Clustering dengan menggunakna K=3 dan K= 7 kemudian diplih hasil yang paling bagus diantara keduanya"""
+
+# Clustering dengan K = 3
 kmeans = KMeans(n_clusters=3, random_state=0)
 df_cluster['Cluster']= kmeans.fit_predict(df_cluster)
 df_kmean3 = df_cluster
@@ -324,6 +393,8 @@ cluster_means = df_kmean3.groupby('Cluster')[['TransactionID', 'Qty', 'TotalAmou
 
 # Display the calculated means
 cluster_means.head()
+
+"""Hasil jumlah, total, mean, median, dan std untuk masing masing cluster 0,1,2 dari TransaksiID, QTY dan Total Amount"""
 
 # Group the data by 'Cluster' and calculate count, sum, mean, median, and standard deviation
 cluster_summary = df_kmean3.groupby('Cluster')[['TransactionID', 'Qty', 'TotalAmount']].agg(
@@ -343,6 +414,7 @@ Customer_count3 = df_cluster['Cluster'].value_counts()
 print('Jumlah customer tiap cluster adalah')
 print(Customer_count3)
 
+# Presentasi jumlah customer tiap clusternya.
 percentage_customer_count = (Customer_count3 / Customer_count3.sum()) * 100
 
 # Create a colormap based on the percentage values
@@ -378,7 +450,7 @@ plt.ylabel('Total Qty')
 plt.title('K-Mean Clustering K = 3')
 plt.show()
 
-#dengan K = 7
+#Cluster Kmean dengan K = 7
 kmeans = KMeans(n_clusters=8, random_state=0)
 df_cluster['Cluster']= kmeans.fit_predict(df_cluster)
 df_kmean7 = df_cluster
@@ -388,6 +460,8 @@ df_kmean7.head(10)
 Customer_count = df_kmean7['Cluster'].value_counts()
 print('Jumlah customer tiap cluster adalah')
 print(Customer_count)
+
+"""Hasil jumlah, total, mean, median, dan std untuk masing masing cluster 0,1,2 dari TransaksiID, QTY dan Total Amount"""
 
 # Group the data by 'Cluster' and calculate count, sum, mean, median, and standard deviation
 cluster_summary = df_kmean7.groupby('Cluster')[['TransactionID', 'Qty', 'TotalAmount']].agg(
@@ -402,6 +476,7 @@ cluster_summary.columns = ['TransactionID_Count', 'TransactionID_Sum', 'Transact
                             'TotalAmount_Count', 'TotalAmount_Sum', 'TotalAmount_Mean', 'TotalAmount_Median', 'TotalAmount_Std']
 cluster_summary.head(8)
 
+#Presentasi jumlah Customer tiap clusternya
 percentage_customer_count = (Customer_count / Customer_count.sum()) * 100
 
 # Create a colormap based on the percentage values
@@ -436,3 +511,25 @@ plt.xlabel('Total Transaction')
 plt.ylabel('Total Qty')
 plt.title('K-Mean Clustering K = 7')
 plt.show()
+
+"""**Cluster Interpretasi**
+
+Berdasarkan Cluster yang dipilih yaitu 3 dapat disimpulkan dan dikelompokkan berdasarkan Clusternya yaitu :
+
+1. Cluster 0 -  Customer Legend
+   Merupakan customer dengan tier menengah dengan total Customer sebanyak 90 Customer atau sekitar 20,13% dengan rata rata transaksi sebanyak 15 kali, sedangkan total kualitas produk yang di beli yaitu 58 produk dan rata rata jumlah uang yang di gunakan yaitu sekitar 548k dan total uang yang digunakan yaitu 49 juta
+2. Cluster 1 - Customer Mytic
+   Merupakan customer dengan tier tertinggi dengan total Customer sebanyak 186 Customer atau sekitar 41,61% dengan rata rata transaksi sebanyak 11 kali, sedangkan total kualitas produk yang di beli yaitu 42 produk dan rata rata jumlah uang yang di gunakan yaitu sekitar 348k dan total uang yang digunakan yaitu 71 juta
+3. Cluster 2 - Customer Epic
+	 Merupakan customer dengan tier bawah dengan total Customer sebanyak 171 Customer atau sekitar 38,26% dengan rata rata transaksi sebanyak 8 kali, sedangkan total kualitas produk yang di beli yaitu 29 produk dan rata rata jumlah uang yang di gunakan yaitu sekitar 241k dan total uang yang digunakan yaitu 41 juta.
+
+ ** Business Recommendation**
+
+1. Customer Epic 	: Memberikan promo atau diskon pada saat awal melakukan belanja agar terkesan serta memberikan pelayana yang baik. Apabila customer jarang melakukan transaksi bisa mengirimkan email atau sebuah pemberitahuan mengenai promo promo yang sedang berlangsung serta memberi ucapan atau caption yang menarik agar pembeli kembali untuk membeli barang.  
+
+2. Customer Legend 	: Pada tier ini customer bisa menjadi customer Mytic ataupun customer Epic. Dengan memberikan diskon atau penawaran ekslusif dengan waktu terbatas agar customer dapat berberlanja lebih sering serta memberikan poin atau reward yang dapat di tukarkan menjadi sebuah diskon tambahan atau dapat disimpan. Mengirimkan notifikasi tentang penawaran produk terkini dan memberikan ucapan untuk menarik membeli barang.
+
+3. Customer Mytic 	: Merupakan tier paling tinggi dengan berbagai keuntungan seperti mendapat diskon yang lebih beragam dari tier yang lain, memiliki penawaran khusus, serta memberikan point yang dapat dikumpulkan atau di tukar serta akses untuk produk produk terbaru yang belum di luncurkan dan ekslusif memberikan pelayanan yang sangat baik baik dari ruangan atau dari pelayannya.
+
+
+"""
